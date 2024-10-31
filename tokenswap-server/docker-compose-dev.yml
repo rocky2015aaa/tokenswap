@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  stsvr:
+    container_name: tokenswap
+    image: rocky2015aaa/tokenswap_server:${STSVR_BACKEND_VERSION}
+    environment:
+      STSVR_PROFILE: dev
+      GIN_MODE: ${STSVR_GIN_MODE}
+    ports:
+      - "${STSVR_BACKEND_PORT}:${STSVR_BACKEND_PORT}"
+    restart: always
+    depends_on:
+      tokenswap_db:
+        condition: service_healthy
+    links:
+        - tokenswap_db
+    networks:
+      - mynetwork
+
+  tokenswap_db:
+    container_name: tokenswap_db
+    image: mongo:latest
+    ports:
+      - "${STSVR_MONGODB_PORT}:${STSVR_MONGODB_PORT}"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: tokenswap
+      MONGO_INITDB_ROOT_PASSWORD: 1q2w3e4r
+    volumes:
+      - $HOME${STSVR_MONGODB_VOLUME_PATH}:/data/db
+    healthcheck:
+      test: ["CMD","mongosh", "--username", "tokenswap", "--password", "1q2w3e4r", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+
